@@ -1,0 +1,137 @@
+---
+title: 'Reproducible Research Project: Analysis of weather environmental and health impact'
+output: html_document
+---
+
+## Synopsis
+
+This analysis involves exploring the U.S. National Oceanic and Atmospheric Administration's (NOAA) storm database. This database tracks characteristics of major storms and weather events in the United States, including when and where they occur, as well as estimates of any fatalities, injuries, and property damage.
+
+To examine which weather events are the most destructive, this analysis looks at the rates of injury, death, an property damage for all events since 1990.
+
+## Data Processing
+
+The information for this analysis comes from Coursera's provided data: https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2.
+This is a CSV file. 
+
+The events in the database start in the year 1950 and end in November 2011. In the earlier years of the database there are generally fewer events recorded, most likely due to a lack of good records. More recent years should be considered more complete.
+
+First, I will download all related data to the analysis (this is what the data looks like without organization):
+
+``` {r set info}
+
+CSVfile <- read.csv("repdata-data-StormData2.csv")
+
+head(CSVfile)
+
+
+```
+
+## Cleaning the Data
+
+Many of the categories within this data set do not pertain to the information required, and in addition need to have normalized names:
+
+``` {r clean data}
+
+
+reduced.data <- CSVfile[,c("EVTYPE", "FATALITIES", "INJURIES", "PROPDMG")]
+
+reduced.data$EVTYPE <- 
+    gsub("^HEAT$", "EXCESSIVE HEAT", reduced.data$EVTYPE)
+reduced.data$EVTYPE <- 
+    gsub("^TSTM WIND$", "THUNDERSTORM WIND", reduced.data$EVTYPE)
+reduced.data$EVTYPE <- 
+    gsub("^THUNDERSTORM WIND$", "THUNDERSTORM WINDS", reduced.data$EVTYPE)
+
+```
+
+Then, this data is aggregated to understand the top ten fatalities caused by these natural disasters, followed by the injuries.
+
+``` {r aggregates}
+
+agg.fatalities.data <-
+        aggregate(
+                reduced.data$FATALITIES, 
+                by=list(reduced.data$EVTYPE), FUN=sum, na.rm=TRUE)
+colnames(agg.fatalities.data) = c("event.type", "fatality.total")
+
+fatalities.sorted <- 
+    agg.fatalities.data[order(-agg.fatalities.data$fatality.total),] 
+top.fatalities <- fatalities.sorted[1:10,]
+
+top.fatalities$event.type <- 
+    factor(
+        top.fatalities$event.type, levels=top.fatalities$event.type, 
+        ordered=TRUE)
+
+## Injury information:
+
+agg.injuries.data <-
+        aggregate(
+                reduced.data$INJURIES, 
+                by=list(reduced.data$EVTYPE), FUN=sum, na.rm=TRUE)
+colnames(agg.injuries.data) = c("event.type", "injury.total")
+
+injuries.sorted <- agg.injuries.data[order(-agg.injuries.data$injury.total),]
+
+top.injuries <- injuries.sorted[1:10,]
+
+top.injuries$event.type <- 
+    factor(
+        top.injuries$event.type, levels=top.injuries$event.type, 
+        ordered=TRUE)
+
+```
+
+Then the same is calculated for property damage:
+
+``` {r property damage}
+agg.prop.dmg.data <-
+        aggregate(
+                reduced.data$PROPDMG, 
+                by=list(reduced.data$EVTYPE), FUN=sum, na.rm=TRUE)
+colnames(agg.prop.dmg.data) = c("event.type", "prop.dmg.total")
+
+prop.dmg.sorted <- agg.prop.dmg.data[order(-agg.prop.dmg.data$prop.dmg.total),] 
+top.prop.dmg <- prop.dmg.sorted[1:10,]
+
+top.prop.dmg$event.type <- 
+    factor(
+        top.prop.dmg$event.type, levels=top.prop.dmg$event.type, 
+        ordered=TRUE)
+```
+
+## Results
+
+After we have our data, we can then graph it:
+
+Fatalities:
+
+``` {r graphs}
+library(ggplot2)
+ggplot(data=top.fatalities, aes(x=event.type, y=fatality.total)) + 
+    geom_bar(stat="identity", fill = "#E69F00", colour = "Black") + xlab("Event type") + ylab("Total fatalities") + 
+    ggtitle("Fatalities By Event Type") +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+Injuries:
+
+``` {r injuries}
+
+ggplot(data=top.injuries, aes(x=event.type, y=injury.total)) + 
+    geom_bar(stat="identity", fill = "#CC79A7", colour = "Black") + xlab("Event type") + ylab("Total injuries") + 
+    ggtitle("Injuries By Event Type") +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+
+Property damage:
+
+```{r last step}
+ggplot(data=top.prop.dmg, aes(x=event.type, y=prop.dmg.total)) + 
+    geom_bar(stat="identity", fill = "#009E73", colour = "Black") + xlab("Event type") + 
+    ylab("Total property damage") +  ggtitle("Properties Damaged By Event Type") + 
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
