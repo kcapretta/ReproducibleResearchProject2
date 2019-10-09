@@ -1,6 +1,6 @@
 # Reproducible Research Project: Analysis of weather environmental and health impact
 
-This project is an assignment from John Hopkins University Data Science class for Coursera. 
+This project is an assignment from John Hopkins University Data Science class (Reproducible Research) for Coursera. This course can be found here: https://www.coursera.org/learn/reproducible-research. The R Publication for this data can be found here: http://rpubs.com/kcapretta/537081. 
 
 ## Synopsis
 
